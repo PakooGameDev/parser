@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+   
+    <input type="file" id="file" multiple>
+	<input type="url" id="url">
+
+    <button onclick="renderPage()">Upload</button>
+    <button onclick="Export2Word('exportContent', 'Шпора');">Export</button>
+    
+		<br>
+
+    <div id="exportContent">
+    </div>
+
+		<br>
+
+    <div id="renderContent">
+    </div>
+
+
+    <script>
+	    let exportContent = document.getElementById('exportContent');
+		let side = document.getElementById('renderContent');
+		let urlInput = document.getElementById('url');
+       	function renderPage(){
+			if(urlInput != '') {
+				(async () => {
+    			let response = await fetch(urlInput);
+    			switch (response.status) {
+					// status "OK"
+					case 200:
+						let template = await response.text();
+
+						console.log(template);
+						break;
+					// status "Not Found"
+					case 404:
+						console.log('Not Found');
+						break;
+				}
+			})();
+			} else {
+				exportContent.innerHTML = '';
+        		side.innerHTML = '';
+
+				let fileInput = document.querySelector("#file").files;
+				let i = 0;
+				
+				while(i<fileInput.length){
+					let reader = new FileReader();
+					reader.readAsText(fileInput[i]);
+					reader.onload = function(){
+						let htmlText = reader.result
+						side.insertAdjacentHTML('afterbegin', htmlText)
+					}
+					reader.onerror = function (){
+						console.log(reader.error)
+					}
+					i++
+				}
+				}
+        }
+	
+
+
+        function findResults() {
+			const collections = document.getElementsByClassName("que multichoice deferredfeedback")	
+			let checkArr = []
+
+			Array.from(collections).map((collection) => {
+				const iText = collection.children[0].children[2].innerHTML
+				const qText = collection.children[1].children[0].children[2]
+				const aSelector = collection.children[1].children[0].children[3]
+
+					if(!checkArr.includes(qText.innerText) && !checkArr.includes(aSelector.innerText)){
+						checkArr.push(qText.innerText, aSelector.innerText)
+						
+						exportContent.innerHTML += `<h3 id='qT' style='color:black;'>${qText.innerHTML}</h3>` 
+						Array.from(aSelector.children[1].children).map((selector)=> {
+							if(selector.querySelector('input:checked')){
+								exportContent.innerHTML += `<div id='aT' ${iText == "Баллов: 1,00 из 1,00" ? 'style=color:green;' : 'style=color:red;'}>${selector.children[1].innerHTML}</div>`
+							}
+						})	
+					}
+				})
+				
+	    }
+
+
+	    function Export2Word(element, filename = ''){
+	        const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+	        const postHtml = "</body></html>";
+
+	        findResults(); 
+			side.innerHTML = ''; 
+
+	        const html = preHtml+exportContent.innerHTML+postHtml;   
+	        const blob = new Blob(['\ufeff', html], {type: 'application/msword'});
+	        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+	        const downloadLink = document.createElement("a");
+
+	    	filename = filename?filename+'.doc':'document.doc';
+
+	        document.body.appendChild(downloadLink);
+	        navigator.msSaveOrOpenBlob ? navigator.msSaveOrOpenBlob(blob, filename) : downloadLink.href = url;  downloadLink.download = filename; downloadLink.click();
+	        document.body.removeChild(downloadLink);
+	    }
+    </script>
+</body>
+</html>
+       
+
+    
+    
